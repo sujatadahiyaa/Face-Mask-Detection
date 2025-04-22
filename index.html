@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Mask Detection</title>
+</head>
+<style>
+    table, th, td {
+        border: 1px solid black;
+    }
+    .main {
+        height: 615px;
+        width: 100%;
+        color: white;
+        background-color: #3BC2C8;
+    }
+    .div1, .div2 {
+        margin-left: 35%;
+        font-size: 60px;
+        font-family: cursive;
+        text-transform: uppercase;
+    }
+    .div3 {
+        margin-left: 25%;
+        font-size: 20px;
+        font-style: normal;
+        font-weight: 600;
+        text-transform: lowercase;
+    }
+    .div4 {
+        margin-left: 80%;
+        margin-right: 0;
+        margin-top: 15px;
+    }
+    .my_btn {
+        height: 50px;
+        width: 90%;
+        color: red;
+        font-size: xx-large;
+        text-transform: capitalize;
+        font-style: italic;
+        border-radius: 10px;
+        background-color: rgb(158, 237, 144);
+        border: none;
+    }
+    .my_btn:hover {
+        height: 50px;
+        width: 90%;
+        color: green;
+        cursor: pointer;
+        border-radius: 10px;
+        background-color: rgb(158, 237, 144);
+    }
+</style>
+<body>
+    <table class="main">
+        <tr>
+            <td style="width: 45%; border: none;">
+                <div class="div1">Face Mask</div>
+                <div class="div2">Detection</div>
+                <div class="div3">Scan the face to detect whether you or someone else is wearing a mask or not</div>
+                <div class="div4">
+                    <button id="start-button" onclick="startVideoAndDetect()" type="button" class="my_btn">Scan</button>
+                </div>
+            </td>
+            <td style="width: 55%; border: none;">
+                <div>
+                    <img src="masc.png" alt="" style="height: 380px; width: 80%; margin-top: 5%;">
+                </div>
+            </td>
+        </tr>
+        <div id="video-container">
+            <video id="video-feed" autoplay playsinline style="display: none;"></video>
+        </div>
+    
+    </div>
+    <div id="result" style="display: none;"></div>
+
+    </table>
+    <script>
+        function startVideoAndDetect() {
+            const video = document.getElementById('video-feed');
+
+            // Show the video element
+            video.style.display = 'block';
+
+            // Start the video stream
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => console.error('Error accessing camera:', err));
+
+            // Start the face mask detection process after a short delay
+            setTimeout(detectMask, 2000);
+        }
+
+        function detectMask() {
+            
+            const video = document.getElementById('video-feed');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const resultDiv = document.getElementById('result');
+
+            // Draw the current frame from the video onto the canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Extract image data URL from canvas
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+
+            // Send image data to server for face mask detection
+            fetch('/detect_mask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageDataURL })
+            })
+            .then(response => response.json())
+            .then(results => {
+                // Process results (update UI, etc.)
+                console.log(results);
+            })
+            .catch(err => console.error('Error detecting mask:', err));
+            
+        }
+        
+            function startDetection() {
+                fetch('/start_detection')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('status').innerText = data.message;
+                    });
+            }
+    
+            function stopDetection() {
+                fetch('/stop_detection')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('status').innerText = data.message;
+                    });
+            }
+        
+    </script>
+</body>
+</html>
